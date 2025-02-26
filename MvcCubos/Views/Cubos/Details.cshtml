@@ -1,0 +1,29 @@
+﻿@model MvcCubos.Models.Cubo
+
+@{
+    ViewData["Title"] = "Detalles del Cubo";
+}
+
+<h1 class="text-center mb-4">Detalles del Cubo</h1>
+
+<div class="container d-flex justify-content-center">
+    <div class="card shadow-lg" style="width: 30rem;">
+        <img src="~/images/@Model.Imagen" class="card-img-top img-fluid" alt="Imagen de @Model.Nombre" style="height: 250px; object-fit: contain;">
+        <div class="card-body">
+            <h5 class="card-title text-center">@Model.Nombre</h5>
+            <h6 class="card-subtitle text-muted text-center">@Model.Marca - @Model.Modelo</h6>
+
+            <ul class="list-group list-group-flush mt-3">
+                <li class="list-group-item"><strong>ID:</strong> @Model.IdCubo</li>
+                <li class="list-group-item"><strong>Modelo:</strong> @Model.Modelo</li>
+                <li class="list-group-item"><strong>Marca:</strong> @Model.Marca</li>
+                <li class="list-group-item"><strong>Precio:</strong> @Model.Precio €</li>
+            </ul>
+
+            <div class="mt-4 text-center">
+                <a asp-action="Edit" asp-route-id="@Model.IdCubo" class="btn btn-primary">Editar</a>
+                <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
+            </div>
+        </div>
+    </div>
+</div>

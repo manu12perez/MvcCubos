@@ -15,6 +15,9 @@ builder.Services.AddTransient<RepositoryCubos>();
 
 builder.Services.AddSingleton<HelperPathProvider>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
 /*****************************************************************************************************************************************/
 var app = builder.Build();
 
@@ -35,6 +38,10 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+/**********************************************************************************************************************************************/
+app.UseSession();
+/**********************************************************************************************************************************************/
 
 app.MapControllerRoute(
     name: "default",

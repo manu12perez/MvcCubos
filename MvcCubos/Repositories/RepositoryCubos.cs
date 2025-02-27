@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MvcCubos.Data;
 using MvcCubos.Models;
+using MvcNetCoreUtilidades.Helpers;
 
 namespace MvcCubos.Repositories
 {
@@ -68,6 +69,34 @@ namespace MvcCubos.Repositories
 
                 // Guardar cambios en la base de datos
                 await this.context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteCuboAsync(int idCubo)
+        {
+            // Buscar el cubo en la base de datos
+            var cubo = await this.context.Cubos.FindAsync(idCubo);
+            if (cubo != null)
+            {
+                // Eliminar el cubo de la base de datos
+                this.context.Cubos.Remove(cubo);
+                await this.context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<List<Cubo>> GetCubosSessionAsync(List<int> ids)
+        {
+            var consulta = from datos in this.context.Cubos
+                           where ids.Contains(datos.IdCubo)
+                           select datos;
+
+            if (consulta.Count() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return await consulta.ToListAsync();
             }
         }
     }

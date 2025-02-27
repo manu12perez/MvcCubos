@@ -1,10 +1,30 @@
-﻿@model IEnumerable<MvcCubos.Models.Cubo>
+﻿@model List<Cubo>
+
+@{
+    // Recuperamos los cubos almacenados en sesión (carrito) y en caché (favoritos)
+    List<int> idsCubos = Context.Session.GetObject<List<int>>("IDSCUBOS") ?? new List<int>();
+    List<Cubo> favoritos = memoryCache.Get<List<Cubo>>("FAVORITOS") ?? new List<Cubo>();
+}
 
 @{
     ViewData["Title"] = "Index";
 }
 
 <h1 class="text-center mb-4">Listado de Cubos</h1>
+
+@if (idsCubos.Any())
+{
+    <h3 style="background-color:lightgreen; color:black">
+        Cubos en Carrito: @idsCubos.Count
+    </h3>
+}
+
+@if (favoritos.Any())
+{
+    <h3 style="background-color:blue; color:white">
+        Favoritos: @favoritos.Count
+    </h3>
+}
 
 <p>
     <a asp-action="Create" class="btn btn-success">Crear Nuevo Cubo</a>
@@ -15,20 +35,39 @@
         @foreach (var item in Model)
         {
             <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <img src="~/images/@item.Imagen" class="card-img-top img-fluid" alt="Imagen de @item.Nombre" style="height: 200px; object-fit: contain;">
+                <div class="card shadow-sm position-relative">
+
+                    <!-- Icono de Favorito (Estrella) -->
+                    <a asp-action="SessionCubos" asp-route-idFavorito="@item.IdCubo"
+                       class="position-absolute top-0 end-0 m-2">
+                        @if (favoritos.Any(f => f.IdCubo == item.IdCubo))
+                        {
+                            <img src="~/images/star_filled.png" alt="Favorito" width="30" height="30">
+                        }
+                        else
+                        {
+                            <img src="~/images/star_empty.png" alt="Agregar a Favoritos" width="30" height="30">
+                        }
+                    </a>
+
+                    <img src="~/images/@item.Imagen" class="card-img-top img-fluid"
+                         alt="Imagen de @item.Nombre" style="height: 200px; object-fit: contain;">
+
                     <div class="card-body">
                         <h5 class="card-title">@item.Nombre</h5>
                         <h6 class="card-subtitle text-muted">@item.Marca - @item.Modelo</h6>
                         <p class="card-text mt-2"><strong>Precio:</strong> @item.Precio €</p>
+
                         <div class="d-flex justify-content-between">
                             <a asp-action="Edit" asp-route-id="@item.IdCubo" class="btn btn-primary btn-sm">Editar</a>
                             <a asp-action="Details" asp-route-id="@item.IdCubo" class="btn btn-info btn-sm">Detalles</a>
                             <a asp-action="Delete" asp-route-id="@item.IdCubo" class="btn btn-danger btn-sm">Eliminar</a>
                         </div>
+
                         <div class="mt-3 text-center">
-                            <a asp-action="AddToCart" asp-route-id="@item.IdCubo" class="btn btn-warning btn-sm w-100">
-                                🛒 Añadir al Carrito
+                            <a asp-action="Index" asp-route-idCubo="@item.IdCubo"
+                               class="btn btn-sm w-100 @(idsCubos.Contains(item.IdCubo) ? "btn-success" : "btn-warning")">
+                                🛒 @(idsCubos.Contains(item.IdCubo) ? "En el Carrito" : "Añadir al Carrito")
                             </a>
                         </div>
                     </div>
@@ -37,4 +76,3 @@
         }
     </div>
 </div>
-

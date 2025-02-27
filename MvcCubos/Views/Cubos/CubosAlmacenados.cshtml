@@ -1,0 +1,63 @@
+﻿@model List<Cubo>
+
+@{
+    ViewData["Title"] = "Cubos en el Carrito";
+}
+
+<h1 class="text-center mb-4">Cubos en el Carrito 🛒</h1>
+
+<p>
+    <a asp-controller="Cubos"
+       asp-action="Index"
+       class="btn btn-outline-dark">
+        Volver a la tienda
+    </a>
+</p>
+
+<h2 class="text-danger text-center">
+    @ViewData["MENSAJE"]
+</h2>
+
+@if (Model != null && Model.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Modelo</th>
+                <th>Marca</th>
+                <th>Precio</th>
+                <th>Imagen</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Cubo cubo in Model)
+            {
+                <tr>
+                    <td>@cubo.Nombre</td>
+                    <td>@cubo.Modelo</td>
+                    <td>@cubo.Marca</td>
+                    <td>@cubo.Precio €</td>
+                    <td>
+                        <img src="~/images/@cubo.Imagen" alt="Imagen de @cubo.Nombre"
+                             class="img-fluid" style="max-width: 100px; height: auto;" />
+                    </td>
+                    <td>
+                        <a asp-controller="Cubos"
+                           asp-action="CubosAlmacenados"
+                           asp-route-idCubo="@cubo.IdCubo"
+                           class="btn btn-danger btn-sm">
+                            ❌ Quitar del Carrito
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Sección de Precio Total -->
+    <div class="text-center mt-4">
+        <h3 class="text-success">💰 Precio Total: @ViewData["PRECIO_TOTAL"] €</h3>
+    </div>
+}

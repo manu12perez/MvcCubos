@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using MvcCubos.Extensions;
 using MvcCubos.Models;
 using MvcCubos.Repositories;
 using MvcNetCoreUtilidades.Helpers;
@@ -9,16 +11,38 @@ namespace MvcCubos.Controllers
     {
         private RepositoryCubos repo;
         private HelperPathProvider helperPath;
+        private IMemoryCache memoryCache;
 
-        public CubosController(RepositoryCubos repo, HelperPathProvider helperPath)
+        public CubosController(RepositoryCubos repo, HelperPathProvider helperPath, IMemoryCache memoryCache)
         {
             this.repo = repo;
             this.helperPath = helperPath;
+            this.memoryCache = memoryCache;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? idCubo, int? idFavorito)
         {
             List<Cubo> cubos = await this.repo.GetCubosAsync();
+            List<Cubo> cubosFavoritos;            
+
+            if (idCubo != null)
+            {
+                List<int> idsCubos;
+
+                if (HttpContext.Session.GetObject<List<int>>("IDSCUBOS") == null)
+                {
+                    idsCubos = new List<int>();
+                }
+                else
+                {
+                    idsCubos = HttpContext.Session.GetObject<List<int>>("IDSCUBOS");
+                }
+                idsCubos.Add(idCubo.Value);
+                HttpContext.Session.SetObject("IDSCUBOS", idsCubos);
+
+                ViewData["MENSAJE"] = "Cubos en el carrito: " + idsCubos.Count();
+            }
+            cubos = await this.repo.GetCubosAsync();
             return View(cubos);
         }
 
@@ -104,6 +128,70 @@ namespace MvcCubos.Controllers
             await this.repo.EditCuboAsync(cuboActualizado);
 
             return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> Delete(int id)
+        {            
+            await this.repo.DeleteCuboAsync(id);
+            return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> CubosAlmacenados(int? idCubo, int? precio)
+        {
+            // Inicializar lista de IDs de cubos en sesión
+            List<int> idsCubos = HttpContext.Session.GetObject<List<int>>("IDSCUBOS") ?? new List<int>();
+
+            // Inicializar precio total almacenado en sesión
+            int precioTotal = HttpContext.Session.GetObject<int>("precioTotal");
+
+            // Si se recibe un idCubo, se elimina del carrito y se ajusta el precio
+            if (idCubo != null)
+            {
+                // Buscar el cubo en la base de datos para obtener su precio
+                Cubo cubo = await this.repo.FindCuboAsync(idCubo.Value);
+                if (cubo != null)
+                {
+                    // Restar el precio del cubo eliminado
+                    precioTotal -= cubo.Precio;
+                }
+
+                // Eliminar el cubo de la lista
+                idsCubos.Remove(idCubo.Value);
+
+                // Si la lista queda vacía, eliminamos la sesión
+                if (!idsCubos.Any())
+                {
+                    HttpContext.Session.Remove("IDSCUBOS");
+                    HttpContext.Session.Remove("precioTotal");
+                }
+                else
+                {
+                    // Guardamos la lista actualizada en la sesión
+                    HttpContext.Session.SetObject("IDSCUBOS", idsCubos);
+                    HttpContext.Session.SetObject("precioTotal", precioTotal);
+                }
+            }
+
+            // Si no hay cubos en el carrito, mostramos un mensaje
+            if (!idsCubos.Any())
+            {
+                ViewData["MENSAJE"] = "No hay cubos en el carrito";
+                return View();
+            }
+
+            // Obtener los cubos almacenados en sesión
+            List<Cubo> cubos = await this.repo.GetCubosSessionAsync(idsCubos);
+
+            // Calcular el precio total si no se ha eliminado ningún cubo en esta petición
+            if (idCubo == null)
+            {
+                precioTotal = cubos.Sum(c => c.Precio);
+                HttpContext.Session.SetObject("precioTotal", precioTotal);
+            }
+
+            ViewData["PRECIO_TOTAL"] = precioTotal;
+
+            return View(cubos);
         }
     }
 }
